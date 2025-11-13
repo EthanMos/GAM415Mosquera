@@ -8,6 +8,7 @@
 
 class USphereComponent;
 class UProjectileMovementComponent;
+class UNiagaraSystem;
 
 UCLASS(config=Game)
 class AGAM415MosqueraProjectile : public AActor
@@ -22,21 +23,29 @@ class AGAM415MosqueraProjectile : public AActor
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	UProjectileMovementComponent* ProjectileMovement;
 
+	/** Initialize projectile mesh */
 	UPROPERTY(EditAnywhere)
 		UStaticMeshComponent* ballMesh;
 
+	/** Initialize splatter material */
 	UPROPERTY(EditAnywhere)
 		UMaterial* baseMat;
 
+	/** Initialize random color variable */
 	UPROPERTY()
 		FLinearColor randColor;
 
+	/** Initialize projectile material */
 	UPROPERTY(EditAnywhere)
 		UMaterialInterface* projMat;
 
+	/** Initialize projectile material reference */
 	UPROPERTY()
 		UMaterialInstanceDynamic* dmiMat;
 
+	/** Initialize color variable for the niagara system */
+	UPROPERTY(EditAnywhere)
+		UNiagaraSystem* colorP;
 
 public:
 	AGAM415MosqueraProjectile();

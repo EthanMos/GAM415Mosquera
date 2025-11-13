@@ -4,6 +4,8 @@
 #include "CubeDMIMod.h"
 #include "GAM415MosqueraCharacter.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraComponent.h"
 
 // Sets default values
 ACubeDMIMod::ACubeDMIMod()
@@ -11,9 +13,11 @@ ACubeDMIMod::ACubeDMIMod()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	// Create mesh and collision component in blueprint
 	boxComp = CreateDefaultSubobject<UBoxComponent>("Box Component");
 	cubeMesh = CreateDefaultSubobject<UStaticMeshComponent>("Cube Mesh");
 
+	// Set collision component as root component and attach mesh to the root
 	RootComponent = boxComp;
 	cubeMesh->SetupAttachment(boxComp);
 
@@ -24,8 +28,10 @@ void ACubeDMIMod::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	// Add dynamic on begin overlap call
 	boxComp->OnComponentBeginOverlap.AddDynamic(this, &ACubeDMIMod::OnOverlapBegin);
 
+	// Set dynamic material to mesh
 	if (baseMat)
 	{
 		dmiMat = UMaterialInstanceDynamic::Create(baseMat, this);
@@ -50,18 +56,32 @@ void ACubeDMIMod::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* Ot
 {
 	AGAM415MosqueraCharacter* overlappedActor = Cast<AGAM415MosqueraCharacter>(OtherActor);
 
+	// If character touches cube
 	if (overlappedActor)
 	{
+		// Create randum floats to make a randomized vector
 		float ranNumX = UKismetMathLibrary::RandomFloatInRange(0.f, 1.f);
 		float ranNumY = UKismetMathLibrary::RandomFloatInRange(0.f, 1.f);
 		float ranNumZ = UKismetMathLibrary::RandomFloatInRange(0.f, 1.f);
 
-		FVector4 randColor = FVector4(ranNumX, ranNumY, ranNumZ, 1.f);
+		// Random color initialization
+		FLinearColor randColor = FLinearColor(ranNumX, ranNumY, ranNumZ, 1.f);
+		
+		// If dynamic material has been made
 		if (dmiMat) 
 		{
+			// Randomize color and darkness
 			dmiMat->SetVectorParameterValue("Color", randColor);
 			dmiMat->SetScalarParameterValue("Darkness", ranNumX);
 
+			// If colorP is valid
+			if (colorP)
+			{
+				// Create niagara component with set color
+				UNiagaraComponent* particleComp = UNiagaraFunctionLibrary::SpawnSystemAttached(colorP, OtherComp, NAME_None, FVector(100.f, 0.f, 0.f), FRotator(0.f), EAttachLocation::KeepRelativeOffset, true);
+				particleComp->SetNiagaraVariableLinearColor(FString("RandColor"), randColor);
+
+			}
 		}
 	}
 }
