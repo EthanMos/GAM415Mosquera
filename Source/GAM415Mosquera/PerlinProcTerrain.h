@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "ProceduralMeshComponent.h"
 #include "PerlinProcTerrain.generated.h"
 
 class UProceduralMeshComponent;
@@ -54,17 +55,23 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	//Call function when created
+	virtual void OnConstruction(const FTransform& Transform) override;
+
 	UFUNCTION(BlueprintCallable)
 		void AlterMesh(FVector impactPoint);
 
 private:
 	// Reference and Array Initialization
 	UProceduralMeshComponent* procMesh;
+	TArray<FVector> OriginalVertices;
 	TArray<FVector> Vertices;
 	TArray<int> Triangles;
 	TArray<FVector2D> UV0;
 	TArray<FVector> Normals;
+	TArray<FProcMeshTangent> Tangents;
 	TArray<FColor> UpVertexColors;
+	TArray<FVector> AccumulatedDepth;
 
 	// ID for UV section
 	int sectionID = 0;

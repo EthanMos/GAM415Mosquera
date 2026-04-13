@@ -2,7 +2,6 @@
 
 
 #include "PerlinProcTerrain.h"
-#include "ProceduralMeshComponent.h"
 #include "KismetProceduralMeshLibrary.h"
 
 // Sets default values
@@ -17,15 +16,22 @@ APerlinProcTerrain::APerlinProcTerrain()
 
 }
 
+void APerlinProcTerrain::OnConstruction(const FTransform& Transform)
+{
+	Super::OnConstruction(Transform);
+
+
+}
+
 // Called when the game starts or when spawned
 void APerlinProcTerrain::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 	// Create plane
 	CreateVertices();
 	CreateTriangles();
-	procMesh->CreateMeshSection(sectionID, Vertices, Triangles, Normals, UV0, UpVertexColors, TArray<FProcMeshTangent>(), true);
+	procMesh->CreateMeshSection(sectionID, Vertices, Triangles, Normals, UV0, UpVertexColors, Tangents, true);
 	procMesh->SetMaterial(0, Mat);
 
 }
@@ -46,11 +52,21 @@ void APerlinProcTerrain::AlterMesh(FVector impactPoint)
 
 		if (FVector(Vertices[i] - tempVector).Size() < radius)
 		{
-			Vertices[i] = Vertices[i] - Depth;
-			procMesh->UpdateMeshSection(sectionID, Vertices, Normals, UV0, UpVertexColors, TArray<FProcMeshTangent>());
+			float Dist = FVector(OriginalVertices[i] - tempVector).Size();
 
+			if (Dist < radius)
+			{
+				float Falloff = 1.0f - (Dist / radius);
+				Falloff = FMath::Clamp(Falloff, 0.0f, 1.0f);
+
+				AccumulatedDepth[i] += Depth * Falloff;
+
+				Vertices[i] = OriginalVertices[i] - AccumulatedDepth[i];
+			}
 		}
 	}
+	procMesh->UpdateMeshSection(sectionID, Vertices, Normals, UV0, UpVertexColors, Tangents);
+
 }
 
 void APerlinProcTerrain::CreateVertices()
@@ -61,12 +77,20 @@ void APerlinProcTerrain::CreateVertices()
 		for (int Y = 0; Y <= YSize; Y++)
 		{
 			float Z = FMath::PerlinNoise2D(FVector2D(X * NoiseScale + 0.1, Y * NoiseScale + 0.1)) * ZMultiplier;
-			GEngine->AddOnScreenDebugMessage(-1, 999.0f, FColor::Yellow, FString::Printf(TEXT("Z %f"), Z));
 			Vertices.Add(FVector(X * Scale, Y * Scale, Z));
 			UV0.Add(FVector2D(X * UVScale, Y * UVScale));
 
+
 		}
 	}
+	AccumulatedDepth.SetNum(Vertices.Num());
+
+	for (int i = 0; i < AccumulatedDepth.Num(); i++)
+	{
+		AccumulatedDepth[i] = FVector::ZeroVector;
+	}
+	OriginalVertices = Vertices;
+
 }
 
 void APerlinProcTerrain::CreateTriangles()

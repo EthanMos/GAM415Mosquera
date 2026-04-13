@@ -93,7 +93,7 @@ void AGAM415MosqueraProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* Othe
 		MatInstance->SetVectorParameterValue("Color", randColor);
 		MatInstance->SetScalarParameterValue("Frame", frameNum);
 
-		// Alter terrain apon projectile impact
+		// Alter terrain upon projectile impact
 		APerlinProcTerrain* procTerrain = Cast<APerlinProcTerrain>(OtherActor);
 
 		if (procTerrain)
